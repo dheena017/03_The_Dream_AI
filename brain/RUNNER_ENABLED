@@ -1,4 +1,1 @@
-# Dream AI Runner - ENABLED
-# This file enables the runner loop in runner.py to execute generated scripts
-# Created: 2026-01-14
-# To disable: delete this file or unset DREAM_AI_RUNNER=1
+Enabled
