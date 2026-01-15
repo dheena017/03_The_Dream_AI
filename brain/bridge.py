@@ -14,6 +14,8 @@ from brain.evolution.smart_developer import SmartDeveloper
 from brain.evolution.self_evolution import SelfEvolutionEngine
 from brain.observation_memory import ObservationMemory
 from brain.skill_library import SkillLibrary
+from brain.scholar import Scholar
+from brain.surgeon import Surgeon
 from datetime import datetime
 
 # Try to import optional modules
@@ -96,6 +98,8 @@ class Bridge:
         
         self.developer = SmartDeveloper()
         self.evolution_engine = SelfEvolutionEngine()  # 👈 NEW: Self-evolution
+        self.scholar = Scholar()
+        self.surgeon = Surgeon()
         
         # Initialize runner if available
         if Runner:
@@ -213,6 +217,33 @@ class Bridge:
                     if self.runner and os.path.exists(runner_enabled_path):
                         output.append("🏃 RUNNER: Executing task...")
                         execution_result = self.runner.execute_task(script_path)
+
+                        # === SELF-CORRECTION LOOP ===
+                        if execution_result and ("❌" in execution_result or "Traceback" in execution_result):
+                            output.append("\n💥 CRASH DETECTED - ACTIVATING IMMUNE SYSTEM")
+                            output.append("   Switching to 'Scholar' mode for research...")
+
+                            # 1. Scholar researches the error
+                            fix_plan = self.scholar.research_error(execution_result, script_path)
+                            output.append(f"🎓 SCHOLAR: Fix identified -> {fix_plan.get('type')}")
+
+                            # 2. Surgeon applies the fix
+                            if fix_plan.get('action') != 'log_only':
+                                success = self.surgeon.apply_fix(script_path, fix_plan)
+                                if success:
+                                    output.append("🩺 SURGEON: Code modified successfully.")
+
+                                    # 3. Retry execution
+                                    output.append("🏃 RUNNER: Retrying fixed code...")
+                                    execution_result = self.runner.execute_task(script_path)
+                                    if "❌" not in execution_result and "Traceback" not in execution_result:
+                                        output.append("✅ RECOVERY SUCCESSFUL!")
+                                    else:
+                                        output.append("⚠️  Recovery failed on retry.")
+                                else:
+                                    output.append("❌ Surgeon could not apply fix.")
+                        # ============================
+
                         if execution_result:
                             output.append(f"📤 OUTPUT:\n{execution_result}")
                     else:
