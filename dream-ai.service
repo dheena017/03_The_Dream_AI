@@ -1,0 +1,23 @@
+[Unit]
+Description=Dream AI - Autonomous Digital Descendant
+Documentation=man:dream-ai(1)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dheena
+WorkingDirectory=/home/dheena/My_Life_Work/03_The_Dream_AI
+ExecStart=/bin/bash /home/dheena/My_Life_Work/03_The_Dream_AI/start_dream_ai.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+# Keep running with systemd
+KillMode=process
+Delegate=yes
+
+[Install]
+WantedBy=multi-user.target

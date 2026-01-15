@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧬 Dream AI - Mission Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0e27;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Cyberpunk text glow effect */
+        .glow-text {
+            text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            border-bottom: 2px solid #00ff41;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 5px;
+            animation: flicker 3s infinite;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00cc33;
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        .autopilot-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+            color: #0a0e27;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            animation: autopilot-pulse 1.5s ease-in-out infinite;
+            letter-spacing: 2px;
+        }
+
+        @keyframes autopilot-pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(0, 255, 65, 1);
+                transform: scale(1.05);
+            }
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes flicker {
+            0%, 100% { text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41; }
+            50% { text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41, 0 0 60px #00ff41; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0f1220 100%);
+            border: 2px solid #00ff41;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2), inset 0 0 10px rgba(0, 255, 65, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .panel h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #00ff41;
+            padding-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #00663300;
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .status-value {
+            color: #00cc33;
+            font-weight: bold;
+        }
+
+        .status-value.active {
+            color: #00ff41;
+            text-shadow: 0 0 10px #00ff41;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        button {
+            background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+            color: #0a0e27;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            width: 100%;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #00ff41 0%, #00ff41 100%);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+            transform: scale(1.02);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .evolution-controls {
+            position: relative;
+            z-index: 1;
+        }
+
+        .evolution-log {
+            background: #0a0e27;
+            border: 1px solid #00663300;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(0, 255, 65, 0.05);
+            border-left: 3px solid #00ff41;
+            font-size: 0.9em;
+            word-break: break-word;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-entry.success {
+            border-left-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .log-entry.error {
+            border-left-color: #ff0055;
+            color: #ff0055;
+        }
+
+        .log-entry.info {
+            border-left-color: #00ccff;
+            color: #00ccff;
+        }
+
+        .recent-evolutions {
+            position: relative;
+            z-index: 1;
+        }
+
+        .evolution-item {
+            background: rgba(0, 255, 65, 0.05);
+            border-left: 3px solid #00ff41;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 3px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .evolution-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .evolution-filename {
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .evolution-timestamp {
+            color: #00cc33;
+            font-size: 0.85em;
+        }
+
+        .evolution-complexity {
+            color: #00ccff;
+            font-size: 0.9em;
+            padding: 5px 0;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1s infinite;
+        }
+
+        .status-dot.online {
+            background-color: #00ff41;
+            box-shadow: 0 0 10px #00ff41;
+        }
+
+        .status-dot.offline {
+            background-color: #666;
+            animation: none;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00cc33;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid rgba(0, 255, 65, 0.2);
+            border-top: 2px solid #00ff41;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .module-selector {
+            background: #0a0e27;
+            border: 1px solid #00663300;
+            color: #00ff41;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+            width: 100%;
+            font-size: 1em;
+        }
+
+        .module-selector option {
+            background: #1a1f3a;
+            color: #00ff41;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stat-box {
+            background: rgba(0, 255, 65, 0.05);
+            border: 1px solid #00663300;
+            padding: 10px;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #00cc33;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 class="glow-text">🧬 DREAM AI - MISSION CONTROL</h1>
+            <div class="subtitle">Neural Evolution Command Center | Phase 3 Active</div>
+            <div class="autopilot-badge" id="autopilotBadge">🤖 AUTO-PILOT: ENGAGED</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="grid">
+            <!-- System Status Panel -->
+            <div class="panel">
+                <h2>⚙️ SYSTEM STATUS</h2>
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value active">
+                        <span class="status-dot online"></span>ONLINE
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Total Evolutions:</span>
+                    <span class="status-value" id="totalEvolutions">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Last Evolution:</span>
+                    <span class="status-value" id="lastEvolutionTime">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Last Module:</span>
+                    <span class="status-value" id="lastModule">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Last Complexity:</span>
+                    <span class="status-value" id="lastComplexity">--</span>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="stat-value" id="successCount">0</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="failureCount">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #00663300; position: relative; z-index: 1;">
+                    <div style="font-size: 0.9em; color: #00cc33;">
+                        <div>CPU: <span id="cpuStatus">100%</span></div>
+                        <div>Memory: <span id="memStatus">64MB</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evolution Control Panel -->
+            <div class="panel">
+                <h2>🎮 EVOLUTION CONTROLS</h2>
+                <div class="evolution-controls">
+                    <label style="position: relative; z-index: 1; display: block; margin-bottom: 10px;">
+                        <span style="color: #00cc33; font-size: 0.9em;">Select Target Module:</span>
+                    </label>
+                    <select id="moduleSelector" class="module-selector">
+                        <option value="code_analyzer.py">📊 Code Analyzer</option>
+                        <option value="performance_profiler.py">⚡ Performance Profiler</option>
+                        <option value="self_modifier.py">🔧 Self Modifier</option>
+                        <option value="orchestrator.py">🎼 Orchestrator</option>
+                    </select>
+                    <button onclick="manualEvolve()" style="position: relative; z-index: 1;">
+                        ▶️ MANUAL EVOLUTION START
+                    </button>
+                    <div class="evolution-log" id="evolutionLog">
+                        <div class="log-entry info">System ready for evolution commands...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Evolutions Panel -->
+            <div class="panel full-width">
+                <h2>📊 RECENT EVOLUTIONS</h2>
+                <div class="recent-evolutions" id="recentEvolutions">
+                    <div class="log-entry info">Waiting for evolution data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let evolutionLog = [];
+        let statusData = null;
+
+        // Auto-update status every 2 seconds
+        function updateStatus() {
+            fetch('/evolution-status')
+                .then(response => response.json())
+                .then(data => {
+                    statusData = data;
+                    updateStatusDisplay(data);
+                })
+                .catch(error => {
+                    console.error('Status fetch error:', error);
+                    addLog('Failed to fetch status: ' + error, 'error');
+                });
+            
+            // Also fetch autonomous status
+            fetch('/autonomous-status')
+                .then(response => response.json())
+                .then(data => {
+                    updateAutonomousStatus(data);
+                })
+                .catch(error => {
+                    console.error('Autonomous status fetch error:', error);
+                });
+        }
+
+        function updateAutonomousStatus(data) {
+            const badge = document.getElementById('autopilotBadge');
+            if (data.autonomous_enabled) {
+                badge.textContent = '🤖 AUTO-PILOT: ENGAGED';
+                badge.style.opacity = '1';
+            } else {
+                badge.textContent = '🤖 AUTO-PILOT: STANDBY';
+                badge.style.opacity = '0.6';
+            }
+        }
+
+        function updateStatusDisplay(data) {
+            document.getElementById('totalEvolutions').textContent = data.total_evolutions || '0';
+            
+            if (data.last_evolution) {
+                const lastEvo = data.last_evolution;
+                document.getElementById('lastEvolutionTime').textContent = 
+                    formatTime(lastEvo.timestamp);
+                document.getElementById('lastModule').textContent = 
+                    lastEvo.filename || 'N/A';
+                document.getElementById('lastComplexity').textContent = 
+                    lastEvo.complexity_score || 'N/A';
+            }
+
+            // Update success/failure counts
+            const recentEvolutions = data.recent_evolutions || [];
+            let successCount = recentEvolutions.filter(e => e.success).length;
+            let failureCount = recentEvolutions.filter(e => !e.success).length;
+            
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('failureCount').textContent = failureCount;
+
+            // Update recent evolutions display
+            updateRecentEvolutions(recentEvolutions);
+        }
+
+        function updateRecentEvolutions(evolutions) {
+            const container = document.getElementById('recentEvolutions');
+            
+            if (!evolutions || evolutions.length === 0) {
+                container.innerHTML = '<div class="log-entry info">No evolutions yet...</div>';
+                return;
+            }
+
+            container.innerHTML = evolutions.map(evo => `
+                <div class="evolution-item">
+                    <div class="evolution-item-header">
+                        <span class="evolution-filename">
+                            ${evo.success ? '✅' : '❌'} ${evo.filename || 'unknown'}
+                        </span>
+                        <span class="evolution-timestamp">${formatTime(evo.timestamp)}</span>
+                    </div>
+                    <div class="evolution-complexity">
+                        Complexity: ${evo.complexity_score || 'N/A'}
+                    </div>
+                    <div style="font-size: 0.85em; color: #00cc33;">
+                        Lines: ${evo.analysis?.lines_of_code || 'N/A'} | 
+                        Functions: ${evo.analysis?.functions || 'N/A'} | 
+                        Classes: ${evo.analysis?.classes || 'N/A'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatTime(isoString) {
+            if (!isoString) return 'N/A';
+            const date = new Date(isoString);
+            return date.toLocaleTimeString();
+        }
+
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('evolutionLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.insertBefore(entry, logContainer.firstChild);
+            
+            // Limit log entries
+            while (logContainer.children.length > 20) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        async function manualEvolve() {
+            const moduleSelector = document.getElementById('moduleSelector');
+            const filename = moduleSelector.value;
+            
+            addLog(`Initiating evolution of ${filename}...`, 'info');
+            
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>EVOLVING...';
+
+            try {
+                const response = await fetch('/evolve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filename: filename })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addLog(`✅ Evolution successful! Complexity: ${data.complexity_score}`, 'success');
+                } else {
+                    addLog(`❌ Evolution failed: ${data.error || 'Unknown error'}`, 'error');
+                }
+                
+                // Update status
+                updateStatus();
+            } catch (error) {
+                addLog(`❌ Request error: ${error}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '▶️ MANUAL EVOLUTION START';
+            }
+        }
+
+        // Initialize and set up auto-refresh
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus(); // Initial update
+            setInterval(updateStatus, 2000); // Update every 2 seconds
+        });
+    </script>
+</body>
+</html>
