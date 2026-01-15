@@ -253,19 +253,30 @@ class ObservationMemory:
         try:
             browser = observation.get("sensors", {}).get("browser", {})
             visits = browser.get("recent_visits", [])
-            
-            for visit in visits[:10]:  # Store top 10 recent visits
-                cursor.execute("""
-                    INSERT INTO browser_activity
-                    (observation_id, domain, page_title, url, timestamp)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (
+
+            if not visits:
+                return
+
+            browser_data = [
+                (
                     obs_id,
                     visit.get("browser"),
                     visit.get("title"),
                     visit.get("url"),
-                    timestamp
-                ))
+                    timestamp,
+                )
+                for visit in visits[:10]
+            ]
+
+            if browser_data:
+                cursor.executemany(
+                    """
+                    INSERT INTO browser_activity
+                    (observation_id, domain, page_title, url, timestamp)
+                    VALUES (?, ?, ?, ?, ?)
+                """,
+                    browser_data,
+                )
         except Exception as e:
             pass
     
