@@ -89,15 +89,22 @@ class SmartDeveloper:
         elif any(x in task_lower for x in ["python code", "python", "script", "tutorial", "example", "code to work"]):
             print("🐍 Skill: Python Examples")
             body = self._skill_python_code(task, header)
-        # Web Research Skills (AFTER more specific checks to avoid "check" matching)
+        # Web Research Skills
+        elif any(x in task_lower for x in ["bitcoin", "price", "weather", "stock", "crypto", "search", "google", "look up", "find info", "check", "what is", "who is", "where is", "news", "latest", "research", "learn about"]):
+            print("🌐 Skill: Web Research")
+            body = self._skill_web_research(task, header)
+        # Games
+        elif "game" in task_lower:
+            print("🎮 Skill: Game Creation")
+            body = self._skill_game(task, header)
+        # GUI/Window
+        elif any(x in task_lower for x in ["gui", "window", "interface", "app"]):
+            print("🖥️ Skill: GUI Creation")
+            body = self._skill_gui(task, header)
+        # Fallback
         else:
-            web_keywords = ["bitcoin", "price", "weather", "stock", "crypto", "search", "google", "look up", "find info", "check", "what is", "who is", "where is", "news", "latest", "research", "learn about"]
-            if any(x in task_lower for x in web_keywords):
-                print("🌐 Skill: Web Research")
-                body = self._skill_web_research(task, header)
-            else:
-                print("❓ Skill: Fallback")
-                body = self._skill_fallback(task, header)
+            print("❓ Skill: Fallback")
+            body = self._skill_fallback(task, header)
 
         # ASSEMBLE CODE
         full_code = "\n".join(header) + "\n\n" + "\n".join(body) + "\n\n" + "\n".join(footer)
@@ -121,32 +128,91 @@ class SmartDeveloper:
             "def run_task():",
             f"    query = '{query}'",
             "    print(f'🌐 Web Research: {query}...')",
-            "    ",
-            "    # Try multiple research methods",
             "    try:",
-            "        # Method 1: Try to fetch via simple HTTP if it's a known service",
-            "        if 'bitcoin' in query.lower() or 'price' in query.lower():",
-            "            print('  💰 Checking Bitcoin/Price data...')",
-            "            try:",
-            "                import json",
-            "                url = 'https://api.coinbase.com/v2/prices/BTC-USD/spot'",
-            "                try:",
-            "                    req = urllib.request.Request(url)",
-            "                    with urllib.request.urlopen(req, timeout=5) as response:",
-            "                        data = json.loads(response.read().decode())",
-            "                        price = data.get('data', {}).get('amount', 'N/A')",
-            "                        print(f'  💹 Bitcoin Price (USD): ${price}')",
-            "                except Exception as e:",
-            "                    print(f'  ℹ️  Bitcoin API unavailable: {e}')",
-            "            except:",
-            "                pass",
-            "        ",
-            "        # Method 2: Suggest search approach",
-            "        print(f'  🔍 For detailed info, search: \"{query}\" on Google')",
-            "        print(f'  💡 Recommended: Google.com, Wikipedia, CoinMarketCap, etc.')",
+        ]
+
+        if "bitcoin" in query.lower() or "price" in query.lower() or "crypto" in query.lower():
+            body.extend([
+                "        print('  💰 Checking Bitcoin/Price data...')",
+                "        import json",
+                "        url = 'https://api.coinbase.com/v2/prices/BTC-USD/spot'",
+                "        try:",
+                "            req = urllib.request.Request(url)",
+                "            with urllib.request.urlopen(req, timeout=5) as response:",
+                "                data = json.loads(response.read().decode())",
+                "                price = data.get('data', {}).get('amount', 'N/A')",
+                "                print(f'  💹 Bitcoin Price (USD): ${price}')",
+                "        except Exception as e:",
+                "            print(f'  ℹ️  Bitcoin API unavailable: {e}')",
+            ])
+
+        elif "weather" in query.lower():
+            body.extend([
+                "        print('  ☁️  Checking Weather data...')",
+                "        try:",
+                "            url = 'https://wttr.in?format=3'",
+                "            req = urllib.request.Request(url)",
+                "            with urllib.request.urlopen(req, timeout=5) as response:",
+                "                weather = response.read().decode().strip()",
+                "                print(f'  🌡️  Weather: {weather}')",
+                "        except Exception as e:",
+                "            print(f'  ℹ️  Weather API unavailable: {e}')",
+            ])
+
+        else:
+            body.extend([
+                "        # General Search",
+                "        print(f'  🔍 For detailed info, search: \"{query}\" on Google')",
+                "        print(f'  💡 Recommended: Google.com, Wikipedia, etc.')",
+            ])
+
+        body.extend([
             "        print('✅ Web research query prepared')",
             "    except Exception as e:",
             "        print(f'❌ Web research error: {e}')",
+        ])
+
+        return body
+
+    def _skill_game(self, task, header):
+        """Create a simple game"""
+        body = [
+            "def run_task():",
+            "    print('🎮 Starting Guess the Number Game...')",
+            "    target = 42",  # Fixed for automation, normally random
+            "    print('  I am thinking of a number between 1 and 100.')",
+            "    # Simulating a game loop for automation",
+            "    guesses = [10, 50, 42]",
+            "    for guess in guesses:",
+            "        print(f'  Player guesses: {guess}')",
+            "        if guess < target:",
+            "            print('  🤖 Higher!')",
+            "        elif guess > target:",
+            "            print('  🤖 Lower!')",
+            "        else:",
+            "            print('  🎉 Correct! You win!')",
+            "            break",
+        ]
+        return body
+
+    def _skill_gui(self, task, header):
+        """Create a simple GUI (Tkinter)"""
+        header.append("import tkinter as tk")
+        body = [
+            "def run_task():",
+            "    print('🖥️  Launching GUI Application...')",
+            "    try:",
+            "        root = tk.Tk()",
+            "        root.title('Dream AI App')",
+            "        label = tk.Label(root, text='Hello from Dream AI!', font=('Arial', 24))",
+            "        label.pack(padx=20, pady=20)",
+            "        print('  ✅ GUI Window created (close window to finish task)')",
+            "        # Auto-close for automation testing",
+            "        root.after(2000, root.destroy)",
+            "        root.mainloop()",
+            "        print('  ✅ GUI Closed')",
+            "    except Exception as e:",
+            "        print(f'❌ GUI Error (Headless environment?): {e}')",
         ]
         return body
 

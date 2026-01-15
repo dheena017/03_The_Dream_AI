@@ -52,12 +52,15 @@ class Runner:
                     log_wisdom(clean_data)
                     output_lines.append(f"🧠 Wisdom: {clean_data}")
             
-            # Archive the file
+            # Archive the file ONLY if successful (no stderr)
             file_path = Path(script_path)
             if file_path.exists():
-                shutil.move(str(file_path), str(self.archive_path / file_path.name))
-                output_lines.append(f"✅ Archived to {self.archive_path / file_path.name}")
-            
+                if result.returncode == 0:
+                    shutil.move(str(file_path), str(self.archive_path / file_path.name))
+                    output_lines.append(f"✅ Archived to {self.archive_path / file_path.name}")
+                else:
+                    output_lines.append(f"⚠️  Task Failed (Exit Code: {result.returncode}) - File left in workspace for repair")
+
             return "\n".join(output_lines)
             
         except subprocess.TimeoutExpired:
