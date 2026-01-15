@@ -18,26 +18,11 @@ from brain.scholar import Scholar
 from brain.surgeon import Surgeon
 from datetime import datetime
 
-# Try to import optional modules
-try:
-    from brain.evolution import innovator
-except ImportError:
-    innovator = None
-
-try:
-    from brain.memory import learner
-except ImportError:
-    learner = None
-
-try:
-    from brain.evolution import reflector
-except ImportError:
-    reflector = None
-
-try:
-    from brain.runner import Runner
-except ImportError:
-    Runner = None
+# Import modules
+from brain.evolution import innovator
+from brain.memory import learner
+from brain.evolution import reflector
+from brain.runner import Runner
 
 from typing import Dict
 import threading
@@ -88,9 +73,8 @@ class Bridge:
         AI_MODE = "researcher"  # ← CHANGE THIS TO SWITCH MODES
         
         # Initialize Innovator instance with mode
-        self.innovator = innovator.Innovator(mode=AI_MODE) if innovator else None
-        if self.innovator:
-            self.logger.log("💡 Innovator: ENABLED")
+        self.innovator = innovator.Innovator(mode=AI_MODE)
+        self.logger.log("💡 Innovator: ENABLED")
         
         # Initialize Skill Library
         self.skill_library = SkillLibrary()
@@ -101,11 +85,8 @@ class Bridge:
         self.scholar = Scholar()
         self.surgeon = Surgeon()
         
-        # Initialize runner if available
-        if Runner:
-            self.runner = Runner()
-        else:
-            self.runner = None
+        # Initialize runner
+        self.runner = Runner()
             
         self.observation_count = 0
         self.learning_updates = 0
@@ -169,13 +150,12 @@ class Bridge:
                     output.append(execution_result)
                     
                     # Reflect on performance
-                    if reflector:
-                        try:
-                            output.append("🧐 Reflecting on recent performance...")
-                            ref = reflector.Reflector()
-                            ref.reflect()
-                        except Exception as e:
-                            output.append(f"⚠️  Reflection skipped: {e}")
+                    try:
+                        output.append("🧐 Reflecting on recent performance...")
+                        ref = reflector.Reflector()
+                        ref.reflect()
+                    except Exception as e:
+                        output.append(f"⚠️  Reflection skipped: {e}")
                     
                     result_msg = "\n".join(output)
                     print(result_msg)
@@ -253,13 +233,12 @@ class Bridge:
                             output.append("⚠️  Runner not available.")
                     
                     # 4. Reflect on performance
-                    if reflector:
-                        try:
-                            output.append("🧐 Reflecting on recent performance...")
-                            ref = reflector.Reflector()
-                            ref.reflect()
-                        except Exception as e:
-                            output.append(f"⚠️  Reflection skipped: {e}")
+                    try:
+                        output.append("🧐 Reflecting on recent performance...")
+                        ref = reflector.Reflector()
+                        ref.reflect()
+                    except Exception as e:
+                        output.append(f"⚠️  Reflection skipped: {e}")
                     
                     # 5. Save successful tasks to Skill Library
                     if execution_result and "❌" not in execution_result:
@@ -326,8 +305,7 @@ class Bridge:
         print("🤖 AUTONOMOUS MODE ENGAGED - Digital Employee Online")
         print("📬 Task Inbox: brain/tasks.txt")
         
-        if innovator:
-            print("🧠 INNOVATOR MODULE: CONNECTED")
+        print("🧠 INNOVATOR MODULE: CONNECTED")
         
         while self.autonomous_active:
             try:
@@ -349,9 +327,8 @@ class Bridge:
                         print("💤 Inbox empty. Dreaming of improvements...")
                         
                         # Let innovator suggest tasks
-                        if self.innovator:
-                            print("💤 INNOVATOR: Reading Wisdom...")
-                            self.innovator.run_autonomy()
+                        print("💤 INNOVATOR: Reading Wisdom...")
+                        self.innovator.run_autonomy()
                 else:
                     # Create empty tasks file
                     with open("brain/tasks.txt", "w") as f:
