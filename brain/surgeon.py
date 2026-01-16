@@ -1,6 +1,8 @@
 
 import subprocess
 import os
+import ast
+import re
 
 class Surgeon:
     """
@@ -61,12 +63,64 @@ class Surgeon:
                 modified = True
 
             elif fix_plan['type'] == 'auto_format':
-                # Just reading and writing might not fix syntax,
-                # but maybe we can use a formatter if available?
-                # For now, let's just assume we can't easily fix syntax without an LLM.
-                print("🩺 Surgeon: Attempting auto-formatting (not fully implemented)")
-                new_lines = lines
-                # TODO: Implement basic syntax fixers (brackets, colons)
+                print("🩺 Surgeon: Attempting auto-formatting with syntax fixers")
+                new_lines = list(lines)
+
+                try:
+                    # Parse to find the first syntax error
+                    full_source = "".join(new_lines)
+                    ast.parse(full_source)
+                except (SyntaxError, IndentationError) as e:
+                    if e.lineno is not None:
+                        line_idx = e.lineno - 1
+                        if 0 <= line_idx < len(new_lines):
+                            line = new_lines[line_idx]
+                            original_line = line
+
+                            # Fix 1: Unbalanced Brackets (Basic)
+                            open_p = line.count('(')
+                            close_p = line.count(')')
+                            open_b = line.count('[')
+                            close_b = line.count(']')
+                            open_c = line.count('{')
+                            close_c = line.count('}')
+
+                            to_add = ""
+                            if open_p > close_p: to_add += ')' * (open_p - close_p)
+                            if open_b > close_b: to_add += ']' * (open_b - close_b)
+                            if open_c > close_c: to_add += '}' * (open_c - close_c)
+
+                            if to_add:
+                                if line.endswith('\n'):
+                                    line = line.rstrip('\r\n') + to_add + '\n'
+                                else:
+                                    line += to_add
+
+                            # Fix 2: Missing Colon
+                            colon_pattern = r'^\s*(async\s+)?(if|elif|else|for|while|def|class|try|except|finally|with)\b'
+                            if re.match(colon_pattern, line) and not line.strip().endswith(':'):
+                                if '#' in line:
+                                    parts = line.split('#', 1)
+                                    code_part = parts[0]
+                                    comment_part = parts[1]
+                                    if not code_part.strip().endswith(':'):
+                                        line = code_part.rstrip() + ': #' + comment_part
+                                else:
+                                    line = line.rstrip() + ':\n'
+
+                            if line != original_line:
+                                new_lines[line_idx] = line
+                                modified = True
+                                print(f"🩺 Surgeon: Fixed syntax on line {e.lineno}")
+
+                            # Fix 3: Indentation
+                            if isinstance(e, IndentationError) and not modified:
+                                new_lines[line_idx] = "    " + original_line
+                                modified = True
+                                print(f"🩺 Surgeon: Fixed indentation on line {e.lineno}")
+
+                except Exception as e:
+                    print(f"⚠️ Surgeon: analysis failed: {e}")
 
             if modified:
                 with open(filepath, 'w') as f:
