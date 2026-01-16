@@ -7,14 +7,16 @@ Provides web search capabilities for the Brain to learn from the web
 import requests
 import json
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import urllib.parse
+import sqlite3
+import os
 
 
 class GoogleSearchCapability:
     """Enable internet search functionality for Eyes"""
     
-    def __init__(self, api_key: str = None, search_engine_id: str = None):
+    def __init__(self, api_key: str = None, search_engine_id: str = None, cache_db: str = None):
         """
         Initialize Google Search capability
         
@@ -34,8 +36,61 @@ class GoogleSearchCapability:
         self.duckduckgo_url = "https://duckduckgo.com/api"
         self.search_history: List[Dict] = []
         self.is_available = bool(api_key and search_engine_id)
+
+        # Initialize cache
+        self.cache_db = cache_db or os.path.join(os.path.dirname(__file__), "search_cache.db")
+        self._init_cache()
     
-    def search(self, query: str, max_results: int = 5, use_fallback: bool = True) -> List[Dict]:
+    def _init_cache(self):
+        """Initialize SQLite cache for search results"""
+        try:
+            conn = sqlite3.connect(self.cache_db)
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS search_cache (
+                    query TEXT PRIMARY KEY,
+                    results TEXT,
+                    timestamp TEXT
+                )
+            """)
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"⚠️  Cache init error: {e}")
+
+    def _get_from_cache(self, query: str) -> Optional[List[Dict]]:
+        """Retrieve results from cache if valid (less than 24 hours old)"""
+        try:
+            conn = sqlite3.connect(self.cache_db)
+            cursor = conn.cursor()
+            cursor.execute("SELECT results, timestamp FROM search_cache WHERE query = ?", (query,))
+            row = cursor.fetchone()
+            conn.close()
+
+            if row:
+                results_json, timestamp_str = row
+                cached_time = datetime.fromisoformat(timestamp_str)
+                if datetime.now() - cached_time < timedelta(hours=24):
+                    return json.loads(results_json)
+        except Exception as e:
+            print(f"⚠️  Cache read error: {e}")
+        return None
+
+    def _save_to_cache(self, query: str, results: List[Dict]):
+        """Save search results to cache"""
+        try:
+            conn = sqlite3.connect(self.cache_db)
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT OR REPLACE INTO search_cache (query, results, timestamp) VALUES (?, ?, ?)",
+                (query, json.dumps(results), datetime.now().isoformat())
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"⚠️  Cache write error: {e}")
+
+    def search(self, query: str, max_results: int = 5, use_fallback: bool = True, force_refresh: bool = False) -> List[Dict]:
         """
         Search the internet for a query
         
@@ -43,10 +98,27 @@ class GoogleSearchCapability:
             query: Search query string
             max_results: Maximum number of results to return
             use_fallback: Use DuckDuckGo if Google API unavailable
+            force_refresh: Ignore cache and force a fresh search
             
         Returns:
             List of search results with title, url, snippet
         """
+        # Check cache first
+        if not force_refresh:
+            cached_results = self._get_from_cache(query)
+            if cached_results:
+                # Use cached results (slice to max_results)
+                final_results = cached_results[:max_results]
+
+                # Still log to history even if cached
+                self.search_history.append({
+                    "timestamp": datetime.now().isoformat(),
+                    "query": query,
+                    "result_count": len(final_results),
+                    "cached": True
+                })
+                return final_results
+
         results = []
         
         # Try Google Search API first
@@ -57,11 +129,16 @@ class GoogleSearchCapability:
         if not results and use_fallback:
             results = self._duckduckgo_search(query, max_results)
         
+        # Save to cache if we got results
+        if results:
+            self._save_to_cache(query, results)
+
         # Store in history
         self.search_history.append({
             "timestamp": datetime.now().isoformat(),
             "query": query,
-            "result_count": len(results)
+            "result_count": len(results),
+            "cached": False
         })
         
         return results
