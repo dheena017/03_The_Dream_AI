@@ -2,6 +2,7 @@
 import os
 import re
 import datetime
+import ast
 
 class Scholar:
     """
@@ -62,8 +63,36 @@ class Scholar:
         return error_type, error_msg
 
     def _check_memory(self, error_type, error_msg):
-        # TODO: Implement actual lookup in corpus.txt
-        return None
+        if not os.path.exists(self.memory_path):
+            return None
+
+        found_solution = None
+
+        try:
+            with open(self.memory_path, 'r') as f:
+                lines = f.readlines()
+
+            for i in range(len(lines)):
+                line = lines[i].strip()
+                # Check for error line
+                if "ERROR: " in line:
+                    parts = line.split("ERROR: ", 1)
+                    if len(parts) == 2:
+                        stored_error = parts[1].strip()
+                        if stored_error == f"{error_type} - {error_msg}":
+                            # Found a match, look for solution in next line
+                            if i + 1 < len(lines):
+                                sol_line = lines[i+1].strip()
+                                if sol_line.startswith("SOLUTION: "):
+                                    try:
+                                        sol_str = sol_line[len("SOLUTION: "):]
+                                        found_solution = ast.literal_eval(sol_str)
+                                    except Exception:
+                                        pass
+        except Exception as e:
+            print(f"🎓 Scholar: Error reading memory: {e}")
+
+        return found_solution
 
     def _web_search_solution(self, error_type, error_msg):
         """
