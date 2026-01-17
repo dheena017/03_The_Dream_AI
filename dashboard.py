@@ -9,7 +9,9 @@ import json
 from datetime import datetime
 import sqlite3
 
-app = Flask(__name__)
+# Use absolute path for templates to avoid errors
+template_dir = os.path.abspath('templates')
+app = Flask(__name__, template_folder=template_dir)
 
 class DashboardData:
     """Collects data from the AI system"""
