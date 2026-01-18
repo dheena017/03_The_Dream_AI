@@ -9,7 +9,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from brain.orchestrator import BrainOrchestrator
+from brain.brain import BrainOrchestrator
 from brain.evolution.smart_developer import SmartDeveloper
 from brain.evolution.self_evolution import SelfEvolutionEngine
 from brain.observation_memory import ObservationMemory
@@ -358,7 +358,9 @@ bridge = Bridge()
 try:
     from flask import Flask, request, jsonify
     
-    app = Flask(__name__)
+    # Use absolute path for templates
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+    app = Flask(__name__, template_folder=template_dir)
     
     @app.route('/brain-log', methods=['POST'])
     def brain_log():
