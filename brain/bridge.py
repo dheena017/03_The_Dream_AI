@@ -307,12 +307,19 @@ class Bridge:
         
         print("🧠 INNOVATOR MODULE: CONNECTED")
         
+        last_task_file_mtime = 0
+        tasks = []
+
         while self.autonomous_active:
             try:
                 # Check for tasks file
                 if os.path.exists("brain/tasks.txt"):
-                    with open("brain/tasks.txt", "r") as f:
-                        tasks = f.readlines()
+                    current_mtime = os.path.getmtime("brain/tasks.txt")
+
+                    if current_mtime != last_task_file_mtime:
+                        with open("brain/tasks.txt", "r") as f:
+                            tasks = f.readlines()
+                        last_task_file_mtime = current_mtime
                     
                     if tasks:
                         current_task = tasks[0].strip()
@@ -323,6 +330,10 @@ class Bridge:
                             remaining = tasks[1:]
                             with open("brain/tasks.txt", "w") as f:
                                 f.writelines(remaining)
+
+                            # We don't update last_task_file_mtime here, so the next loop will
+                            # detect the file change (from our write) and re-read it.
+                            # This ensures we always have the correct state from disk.
                     else:
                         print("💤 Inbox empty. Dreaming of improvements...")
                         
@@ -333,6 +344,8 @@ class Bridge:
                     # Create empty tasks file
                     with open("brain/tasks.txt", "w") as f:
                         f.write("")
+                    last_task_file_mtime = os.path.getmtime("brain/tasks.txt")
+                    tasks = []
                 
                 time.sleep(10)  # Check every 10 seconds
                 
