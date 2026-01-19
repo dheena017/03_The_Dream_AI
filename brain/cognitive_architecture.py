@@ -73,6 +73,9 @@ class CognitiveArchitecture:
             "adaptation_rate": 0.1
         }
         
+        self.is_online = True  # Assume online by default
+        self._start_connectivity_check()
+
         print("🧠 HUMAN-LIKE COGNITIVE ARCHITECTURE INITIALIZED")
         print("   📥 Sensory Buffer: Ready")
         print("   🎯 Working Memory: Online")
@@ -302,14 +305,29 @@ class CognitiveArchitecture:
         evaluation["viable"] = evaluation["success_probability"] > 0.5
         return evaluation
     
-    def _has_internet(self) -> bool:
-        """Check if internet is available"""
+    def _start_connectivity_check(self):
+        """Start a background thread to check internet connectivity"""
+        self.connectivity_thread = threading.Thread(target=self._check_internet_connectivity_loop, daemon=True)
+        self.connectivity_thread.start()
+
+    def _check_internet_connectivity_loop(self):
+        """Periodically check internet status"""
+        while True:
+            self.is_online = self._check_internet_status()
+            time.sleep(60)  # Check every 60 seconds
+
+    def _check_internet_status(self) -> bool:
+        """The actual check for internet connectivity"""
         try:
             import socket
             socket.create_connection(("8.8.8.8", 53), timeout=1)
             return True
         except:
             return False
+
+    def _has_internet(self) -> bool:
+        """Check if internet is available (non-blocking)"""
+        return self.is_online
     
     def _make_decision(self, plan: Dict, evaluation: Dict) -> Dict:
         """Decide whether to proceed"""
