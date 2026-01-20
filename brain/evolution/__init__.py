@@ -1,13 +1,7 @@
 """Evolution package - Self-evolution and code generation capabilities."""
 
-from .developer import Developer
-from .innovator import Innovator
-from .creator import Creator
-from .patcher import Patcher
+from .smart_developer import SmartDeveloper as Developer
 
 __all__ = [
     'Developer',
-    'Innovator',
-    'Creator',
-    'Patcher',
 ]
