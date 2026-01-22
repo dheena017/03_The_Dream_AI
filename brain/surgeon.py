@@ -53,12 +53,53 @@ class Surgeon:
                         new_lines.append(line)
 
             elif fix_plan['type'] == 'define_variable':
-                # Crude fix: define variable as None at top
                 var = fix_plan['variable']
-                print(f"🩺 Surgeon: Injecting missing variable -> {var} = None")
-                new_lines.append(f"{var} = None # Surgeon fixed NameError\n")
-                new_lines.extend(lines)
-                modified = True
+                line_number = fix_plan.get('line_number')
+
+                if line_number and isinstance(line_number, int) and 0 < line_number <= len(lines):
+                    # Smart fix: define variable before usage with correct indentation
+                    target_index = line_number - 1
+                    target_line = lines[target_index]
+
+                    # Detect indentation
+                    indent = target_line[:len(target_line) - len(target_line.lstrip())]
+                    # Clean line (remove comments and whitespace)
+                    stripped_line = target_line.split('#')[0].strip()
+
+                    # Safety Check: Avoid injecting inside multi-line expressions if possible
+                    # Heuristics:
+                    # 1. Ends with ',' -> likely list/tuple/arg list
+                    # 2. Ends with '\' -> continuation
+                    # 3. Starts with closing bracket/brace
+                    is_unsafe = (
+                        stripped_line.endswith(',') or
+                        stripped_line.endswith('\\') or
+                        stripped_line.startswith(')') or
+                        stripped_line.startswith(']') or
+                        stripped_line.startswith('}')
+                    )
+
+                    if is_unsafe:
+                        print(f"🩺 Surgeon: Line {line_number} looks unsafe for injection (inside expression?). Falling back to crude fix.")
+                        # Crude fix fallback
+                        print(f"🩺 Surgeon: Injecting missing variable -> {var} = None (at top)")
+                        new_lines.append(f"{var} = None # Surgeon fixed NameError\n")
+                        new_lines.extend(lines)
+                        modified = True
+                    else:
+                        print(f"🩺 Surgeon: Injecting missing variable -> {var} = None at line {line_number}")
+
+                        # Reconstruct lines
+                        new_lines = lines[:target_index]
+                        new_lines.append(f"{indent}{var} = None # Surgeon fixed NameError\n")
+                        new_lines.extend(lines[target_index:])
+                        modified = True
+                else:
+                    # Crude fix: define variable as None at top (Fallback)
+                    print(f"🩺 Surgeon: Injecting missing variable -> {var} = None (at top)")
+                    new_lines.append(f"{var} = None # Surgeon fixed NameError\n")
+                    new_lines.extend(lines)
+                    modified = True
 
             elif fix_plan['type'] == 'auto_format':
                 # Just reading and writing might not fix syntax,

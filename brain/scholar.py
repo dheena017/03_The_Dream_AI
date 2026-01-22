@@ -25,29 +25,33 @@ class Scholar:
         print("🎓 Scholar: Analyzing crash report...")
 
         # 1. Extract the actual error
-        error_type, error_msg = self._parse_error(error_output)
-        print(f"🎓 Scholar: Identified error -> {error_type}: {error_msg}")
+        error_type, error_msg, line_number = self._parse_error(error_output, script_path)
+        print(f"🎓 Scholar: Identified error -> {error_type}: {error_msg} (Line {line_number})")
 
         # 2. Check memory first
         known_fix = self._check_memory(error_type, error_msg)
         if known_fix:
+            # Inject line number if available
+            if line_number and 'line_number' not in known_fix:
+                known_fix['line_number'] = line_number
             print("🎓 Scholar: Recall -> I have solved this before!")
             return known_fix
 
         # 3. Research (Web Search Simulation / Real Search)
         print("🎓 Scholar: Researching solution online...")
-        solution = self._web_search_solution(error_type, error_msg)
+        solution = self._web_search_solution(error_type, error_msg, line_number)
 
         # 4. Save to memory
         self._save_to_memory(error_type, error_msg, solution)
 
         return solution
 
-    def _parse_error(self, output):
-        """Extracts the last error from traceback"""
+    def _parse_error(self, output, script_path=None):
+        """Extracts the last error and line number from traceback"""
         lines = output.split('\n')
         error_type = "UnknownError"
         error_msg = "Unknown error"
+        line_number = None
 
         # Look for traceback
         for line in reversed(lines):
@@ -59,13 +63,28 @@ class Scholar:
                     error_msg = parts[1].strip()
                     break
 
-        return error_type, error_msg
+        # Look for line number
+        if script_path:
+            # Simple check for script name in traceback lines
+            # script_path might be absolute or relative, output might differ
+            script_name = os.path.basename(script_path)
+
+            for line in lines:
+                if script_name in line and "File " in line:
+                    match = re.search(r"line (\d+)", line)
+                    if match:
+                        line_number = int(match.group(1))
+                        # We keep searching to find the *last* occurrence (deepest in stack for that file)
+                        # or specifically where the error originated.
+                        # Usually the last mention of the file is what we want.
+
+        return error_type, error_msg, line_number
 
     def _check_memory(self, error_type, error_msg):
         # TODO: Implement actual lookup in corpus.txt
         return None
 
-    def _web_search_solution(self, error_type, error_msg):
+    def _web_search_solution(self, error_type, error_msg, line_number=None):
         """
         Simulates finding a solution.
         In a real scenario, this would scrape StackOverflow/Google.
@@ -107,11 +126,14 @@ class Scholar:
         if error_type == "NameError":
             var_name = re.search(r"name '(\w+)' is not defined", error_msg)
             if var_name:
-                return {
+                fix = {
                     "type": "define_variable",
                     "variable": var_name.group(1),
                     "action": "modify_code"
                 }
+                if line_number:
+                    fix["line_number"] = line_number
+                return fix
 
         # Fallback
         return {
